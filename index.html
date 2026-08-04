@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#FF6B00" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Pisces</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- SPLASH SCREEN -->
+  <div id="splash-screen" class="screen active">
+    <div class="splash-content">
+      <div class="logo-container">
+        <img src="/assets/IMG-20260804-WA5859~2.jpg" alt="Pisces" class="custom-logo" onerror="this.style.display='none'" />
+        <h1 class="app-name">Pisces</h1>
+        <p class="tagline">Connect, chat, and stay close</p>
+      </div>
+      <div class="splash-loader">
+        <div class="loader-bar"></div>
+      </div>
+    </div>
+    <div class="from-godfirst">from <span>GODFIRST</span></div>
+  </div>
+
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen" class="screen">
+    <div class="auth-container">
+      <div class="auth-header">
+        <img src="/assets/IMG-20260804-WA5859~2.jpg" alt="Pisces" class="custom-logo small" onerror="this.style.display='none'" />
+        <h1>Pisces</h1>
+        <p class="auth-desc">Connect, chat, and stay close with the people who matter.</p>
+      </div>
+      <div class="auth-actions">
+        <button id="google-signin-btn" class="btn-google">
+          <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Continue with Google
+        </button>
+        <p class="auth-note">Sign in securely with your Google account. No phone numbers required.</p>
+      </div>
+      <div id="auth-error" class="error-banner hidden"></div>
+      <div id="auth-loading" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Signing in...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE SETUP -->
+  <div id="profile-setup-screen" class="screen">
+    <div class="setup-container">
+      <div class="setup-header">
+        <h2>Complete your profile</h2>
+        <p>Choose a unique username and tell us who you are.</p>
+      </div>
+      <div class="avatar-upload">
+        <div class="avatar-preview" id="avatar-preview">
+          <i data-lucide="user" class="avatar-placeholder"></i>
+        </div>
+        <label for="avatar-input" class="avatar-edit-btn">
+          <i data-lucide="camera"></i>
+        </label>
+        <input type="file" id="avatar-input" accept="image/*" hidden />
+      </div>
+      <form id="profile-setup-form" class="setup-form">
+        <div class="form-group">
+          <label for="setup-username">Username</label>
+          <div class="input-with-prefix">
+            <span class="prefix">@</span>
+            <input type="text" id="setup-username" placeholder="mythic" maxlength="20" autocomplete="off" required />
+          </div>
+          <p class="field-hint">3–20 characters. Letters, numbers, underscores and periods only.</p>
+          <p id="username-error" class="field-error hidden"></p>
+        </div>
+        <div class="form-group">
+          <label for="setup-displayname">Display name</label>
+          <input type="text" id="setup-displayname" placeholder="Your name" maxlength="40" required />
+        </div>
+        <button type="submit" class="btn-primary btn-full">Continue to Pisces</button>
+      </form>
+      <div id="setup-loading" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Saving profile...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="main-app" class="screen">
+    <div id="home-panel" class="panel home-panel">
+      <header class="new-header">
+  <span class="app-title">Pisces</span>
+  <div class="header-row">
+    <div class="search-wrap">
+      <i data-lucide="search"></i>
+      <input type="text" id="main-search-input" placeholder="Search username..." autocomplete="off" />
+    </div>
+    <button id="btn-settings" class="icon-btn" aria-label="Settings">
+      <i data-lucide="menu"></i>
+    </button>
+  </div>
+</header>
+
+      <div id="conversation-list" class="conversation-list"></div>
+
+      <div id="empty-conversations" class="empty-state">
+        <div class="empty-icon">
+          <i data-lucide="messages-square"></i>
+        </div>
+        <h3>No conversations yet</h3>
+        <p>Start a new chat by searching for a username</p>
+        <button id="empty-new-chat" class="btn-primary">New Chat</button>
+      </div>
+
+      <div id="offline-banner" class="offline-banner hidden">
+        <i data-lucide="wifi-off"></i>
+        <span>You're offline</span>
+      </div>
+
+      <button id="fab-new-chat" class="fab-new-chat" aria-label="New chat">
+        <i data-lucide="plus"></i>
+      </button>
+    </div>
+
+    <div id="chat-panel" class="panel chat-panel">
+      <div id="chat-welcome" class="chat-welcome">
+        <div class="welcome-content">
+          <img src="/assets/IMG-20260804-WA5859~2.jpg" alt="Pisces" class="custom-logo" onerror="this.style.display='none'" />
+          <h2>Pisces</h2>
+          <p>Select a conversation or start a new chat to begin messaging.</p>
+        </div>
+      </div>
+
+      <div id="chat-view" class="chat-view hidden">
+        <header class="chat-header">
+          <button id="chat-back" class="icon-btn back-btn" aria-label="Back">
+            <i data-lucide="arrow-left"></i>
+          </button>
+          <div class="chat-header-info">
+            <div class="chat-avatar-wrap">
+              <img id="chat-avatar" src="" alt="" class="chat-avatar hidden" />
+              <div id="chat-avatar-fallback" class="avatar-fallback small">?</div>
+              <span id="chat-online-dot" class="online-dot hidden"></span>
+            </div>
+            <div class="chat-meta">
+              <span id="chat-display-name" class="chat-name">User</span>
+              <span id="chat-status" class="chat-status">@username</span>
+            </div>
+          </div>
+          <button id="chat-more" class="icon-btn" aria-label="More options">
+            <i data-lucide="more-vertical"></i>
+          </button>
+        </header>
+
+        <div id="messages-container" class="messages-container">
+          <div id="messages-list" class="messages-list"></div>
+        </div>
+
+        <div class="composer">
+          <button id="btn-emoji" class="icon-btn composer-btn" aria-label="Emoji">
+            <i data-lucide="smile"></i>
+          </button>
+          <button id="btn-attach" class="icon-btn composer-btn" aria-label="Attach">
+            <i data-lucide="paperclip"></i>
+          </button>
+          <div class="composer-input-wrap">
+            <textarea id="message-input" placeholder="Type a message..." rows="1" maxlength="4000"></textarea>
+          </div>
+          <button id="btn-send" class="send-btn" aria-label="Send" disabled>
+            <i data-lucide="send"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH OVERLAY -->
+  <div id="search-overlay" class="overlay hidden">
+    <div class="overlay-header">
+      <button id="search-overlay-back" class="icon-btn" aria-label="Back">
+        <i data-lucide="arrow-left"></i>
+      </button>
+      <div class="search-input-wrap full">
+        <i data-lucide="search" class="search-icon"></i>
+        <input type="text" id="overlay-search-input" placeholder="Search username..." autocomplete="off" />
+      </div>
+    </div>
+    <div id="search-results" class="search-results">
+      <div class="search-hint"><p>Search for people by their @username</p></div>
+    </div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div id="profile-page" class="screen overlay-page hidden">
+    <header class="page-header">
+      <button id="profile-back" class="icon-btn" aria-label="Back">
+        <i data-lucide="arrow-left"></i>
+      </button>
+      <h2>Profile</h2>
+      <button id="profile-edit-btn" class="text-btn">Edit</button>
+    </header>
+    <div class="profile-content">
+      <div class="profile-avatar-section">
+        <div class="profile-avatar-large">
+          <img id="profile-page-avatar" src="" alt="" class="hidden" />
+          <div id="profile-page-avatar-fallback" class="avatar-fallback large">?</div>
+        </div>
+        <h2 id="profile-page-name">Display Name</h2>
+        <p id="profile-page-username" class="username-text">@username</p>
+        <p id="profile-page-joined" class="joined-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div id="settings-page" class="screen overlay-page hidden">
+    <header class="page-header">
+      <button id="settings-back" class="icon-btn" aria-label="Back">
+        <i data-lucide="arrow-left"></i>
+      </button>
+      <h2>Settings</h2>
+      <div style="width:40px"></div>
+    </header>
+    <div class="settings-content">
+      <div class="settings-section">
+        <h3>Account</h3>
+        <button class="settings-item" id="settings-edit-profile">
+          <i data-lucide="user"></i>
+          <span>Edit profile</span>
+          <i data-lucide="chevron-right" class="chevron"></i>
+        </button>
+      </div>
+      <div class="settings-section">
+        <h3>Notifications</h3>
+        <div class="settings-item toggle-item">
+          <i data-lucide="bell"></i>
+          <span>New messages</span>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-notifications" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="settings-item toggle-item">
+          <i data-lucide="volume-2"></i>
+          <span>Sound</span>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-sound" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>Privacy</h3>
+        <div class="settings-item">
+          <i data-lucide="eye"></i>
+          <span>Last seen</span>
+          <select id="privacy-lastseen" class="settings-select">
+            <option value="everyone">Everyone</option>
+            <option value="contacts">Contacts</option>
+            <option value="nobody">Nobody</option>
+          </select>
+        </div>
+        <div class="settings-item">
+          <i data-lucide="circle"></i>
+          <span>Online status</span>
+          <select id="privacy-online" class="settings-select">
+            <option value="everyone">Everyone</option>
+            <option value="contacts">Contacts</option>
+            <option value="nobody">Nobody</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>About</h3>
+        <button class="settings-item" id="settings-about">
+          <i data-lucide="info"></i>
+          <span>About Pisces</span>
+          <i data-lucide="chevron-right" class="chevron"></i>
+        </button>
+      </div>
+      <div class="settings-section">
+        <button class="settings-item danger" id="btn-logout">
+          <i data-lucide="log-out"></i>
+          <span>Log out</span>
+        </button>
+      </div>
+      <p class="version-text">Pisces v1.0.0</p>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div id="logout-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3>Log out?</h3>
+      <p>You will need to sign in with Google again to continue.</p>
+      <div class="modal-actions">
+        <button id="logout-cancel" class="btn-secondary">Cancel</button>
+        <button id="logout-confirm" class="btn-danger">Log out</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="about-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="about-logo">
+        <img src="/assets/IMG-20260804-WA5859~2.jpg" alt="Pisces" width="64" height="64" onerror="this.style.display='none'" />
+      </div>
+      <h3>Pisces</h3>
+      <p>A modern messaging app built for connection.</p>
+      <p class="about-version">Version 1.0.0 · from GODFIRST</p>
+      <button id="about-close" class="btn-primary btn-full">Close</button>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <div id="dev-banner" class="dev-banner hidden">
+    <span>Development Mode — using local demo data.</span>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
