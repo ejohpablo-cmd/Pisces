@@ -1854,4 +1854,148 @@ body.theme-purple {
   background: var(--bg) !important;
 }
 
-/* Make the status bar / theme-color follow the primary color */
+/* ===== EMPTY STATE – UPPER HALF (does NOT cover header) ===== */
+.home-panel {
+  position: relative;
+}
+
+.empty-state {
+  position: absolute !important;
+  top: 110px;                 /* starts below the header */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+
+  padding-top: 8vh !important;   /* still sits in the upper half */
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-bottom: 24px;
+
+  background: var(--bg);
+  text-align: center;
+  gap: 12px;
+}
+
+.empty-state.hidden {
+  display: none !important;
+}
+
+/* ============================================================
+   FINAL OVERRIDES – paste at the bottom of style.css
+   ============================================================ */
+
+/* --- Theme backgrounds (home screen follows the theme) --- */
+body.theme-dark {
+  --bg: #121212;
+  --bg-secondary: #1E1E1E;
+  --bg-tertiary: #2A2A2A;
+  --text: #F5F5F5;
+  --text-secondary: #B0B0B0;
+  --text-muted: #888888;
+  --border: #333333;
+  --border-light: #2A2A2A;
+  --primary: #FF6B00;
+  --primary-dark: #E55A00;
+  --primary-light: #2A1F18;
+  --primary-soft: #3D2B20;
+}
+
+body.theme-blue {
+  --primary: #2563EB;
+  --primary-dark: #1D4ED8;
+  --primary-light: #DBEAFE;
+  --primary-soft: #93C5FD;
+  --bg: #F0F5FF;
+  --bg-secondary: #E8F0FE;
+  --bg-tertiary: #D6E4FF;
+}
+
+body.theme-green {
+  --primary: #16A34A;
+  --primary-dark: #15803D;
+  --primary-light: #DCFCE7;
+  --primary-soft: #86EFAC;
+  --bg: #F0FDF4;
+  --bg-secondary: #E8F8ED;
+  --bg-tertiary: #D1F2DC;
+}
+
+body.theme-purple {
+  --primary: #7C3AED;
+  --primary-dark: #6D28D9;
+  --primary-light: #EDE9FE;
+  --primary-soft: #C4B5FD;
+  --bg: #F5F3FF;
+  --bg-secondary: #EDE9FE;
+  --bg-tertiary: #DDD6FE;
+}
+
+/* Force home screen + related areas to use the theme background */
+#home-panel,
+.home-panel,
+.conversation-list,
+.empty-state,
+.new-header,
+#main-app {
+  background: var(--bg) !important;
+}
+
+.messages-container {
+  background: var(--bg-secondary) !important;
+}
+
+/* Empty state – upper half of the screen (does NOT cover the header) */
+.home-panel {
+  position: relative;
+}
+
+.empty-state {
+  position: absolute !important;
+  top: 110px !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 5 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+
+  padding-top: 8vh !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  padding-bottom: 24px !important;
+
+  background: var(--bg) !important;
+  text-align: center;
+  gap: 12px;
+}
+
+.empty-state.hidden {
+  display: none !important;
+}
+/* ============================================================
+   Eye-catching App Name (Pisces)
+   ============================================================ */
+
+/* Import a modern bold font */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');
+
+.new-header .app-title {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 1.55rem !important;
+  letter-spacing: -0.5px !important;
+  color: var(--primary) !important;          /* uses the current theme colour */
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
