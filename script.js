@@ -541,11 +541,86 @@ async function loadConversations() {
   }
 
   try {
-    state.conversations = [];
+    // Get all conversation IDs the current user belongs to
+    const { data: memberRows, error: memberError } = await supabaseClient
+      .from("conversation_members")
+      .select("conversation_id")
+      .eq("user_id", state.user.id);
+
+    if (memberError) throw memberError;
+
+    if (!memberRows || memberRows.length === 0) {
+      state.conversations = [];
+      renderConversationList();
+      return;
+    }
+
+    const convIds = memberRows.map((r) => r.conversation_id);
+
+    // Get the conversations
+    const { data: convs, error: convError } = await supabaseClient
+      .from("conversations")
+      .select("*")
+      .in("id", convIds)
+      .order("last_message_at", { ascending: false });
+
+    if (convError) throw convError;
+
+    // Get all members of these conversations
+    const { data: allMembers, error: allMembersError } = await supabaseClient
+      .from("conversation_members")
+      .select("conversation_id, user_id")
+      .in("conversation_id", convIds);
+
+    if (allMembersError) throw allMembersError;
+
+    // Get profiles of the other users
+    const otherUserIds = allMembers
+      .filter((m) => m.user_id !== state.user.id)
+      .map((m) => m.user_id);
+
+    let profilesMap = {};
+    if (otherUserIds.length > 0) {
+      const { data: profiles, error: profilesError } = await supabaseClient
+        .from("profiles")
+        .select("id, username, display_name, avatar_url, is_online, last_seen")
+        .in("id", otherUserIds);
+
+      if (profilesError) throw profilesError;
+
+      profiles.forEach((p) => {
+        profilesMap[p.id] = p;
+      });
+    }
+
+    // Build the final conversation list
+    state.conversations = (convs || []).map((conv) => {
+      const otherMember = allMembers.find(
+        (m) => m.conversation_id === conv.id && m.user_id !== state.user.id
+      );
+      const member = otherMember ? profilesMap[otherMember.user_id] : null;
+
+      return {
+        id: conv.id,
+        member: member || {
+          id: "unknown",
+          username: "unknown",
+          display_name: "Unknown User",
+          avatar_url: null,
+          is_online: false
+        },
+        last_message: conv.last_message || "",
+        last_message_at: conv.last_message_at || conv.created_at,
+        unread: 0
+      };
+    });
+
     renderConversationList();
   } catch (err) {
-    console.error(err);
+    console.error("Load conversations error:", err);
     showToast("Failed to load conversations", "error");
+    state.conversations = [];
+    renderConversationList();
   }
 }
 
@@ -785,6 +860,7 @@ async function sendMessage() {
     is_read: false
   };
 
+  // Optimistic UI update
   if (!state.messages[state.activeConversation.id]) {
     state.messages[state.activeConversation.id] = [];
   }
@@ -810,7 +886,8 @@ async function sendMessage() {
       }
       DEMO_MESSAGES[state.activeConversation.id].push(msg);
     } else {
-      const result = await supabaseClient
+      // Insert message
+      const { data: savedMsg, error: msgError } = await supabaseClient
         .from("messages")
         .insert({
           conversation_id: state.activeConversation.id,
@@ -821,17 +898,31 @@ async function sendMessage() {
         .select()
         .single();
 
-      if (result.error) throw result.error;
+      if (msgError) throw msgError;
 
+      // Update conversation last_message
+      await supabaseClient
+        .from("conversations")
+        .update({
+          last_message: content,
+          last_message_at: savedMsg.created_at,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", state.activeConversation.id);
+
+      // Replace temp message with real one
       const idx = state.messages[state.activeConversation.id].findIndex(function (m) {
         return m.id === tempId;
       });
       if (idx !== -1) {
-        state.messages[state.activeConversation.id][idx] = result.data;
+        state.messages[state.activeConversation.id][idx] = savedMsg;
+        renderMessages(state.messages[state.activeConversation.id]);
       }
     }
   } catch (err) {
+    console.error("Send message error:", err);
     showToast("Failed to send message", "error");
+    // Remove optimistic message
     state.messages[state.activeConversation.id] = state.messages[state.activeConversation.id].filter(function (m) {
       return m.id !== tempId;
     });
@@ -840,6 +931,7 @@ async function sendMessage() {
 
   if (sendBtn) sendBtn.disabled = false;
 }
+
 
 // ============================================================
 // 9. SEARCH
@@ -926,34 +1018,79 @@ function renderSearchResults() {
 }
 
 async function startChatWithUser(user) {
+  // Check if a conversation with this user already exists
   let conv = state.conversations.find(function (c) {
-    return c.member.id === user.id;
+    return c.member && c.member.id === user.id;
   });
 
-  if (!conv) {
-    const newId = generateId();
+  if (conv) {
+    // Already exists → just open it
+    const overlay = $("#search-overlay");
+    if (overlay) overlay.classList.add("hidden");
+    const overlayInput = $("#overlay-search-input");
+    if (overlayInput) overlayInput.value = "";
+    state.searchResults = [];
+    openConversation(conv);
+    return;
+  }
+
+  // Create a new conversation in the database
+  try {
+    showToast("Starting chat...", "info");
+
+    // 1. Create conversation
+    const { data: newConv, error: convError } = await supabaseClient
+      .from("conversations")
+      .insert({
+        last_message: "",
+        last_message_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (convError) throw convError;
+
+    // 2. Add both members
+    const { error: membersError } = await supabaseClient
+      .from("conversation_members")
+      .insert([
+        { conversation_id: newConv.id, user_id: state.user.id },
+        { conversation_id: newConv.id, user_id: user.id }
+      ]);
+
+    if (membersError) throw membersError;
+
+    // 3. Build local conversation object
     conv = {
-      id: newId,
+      id: newConv.id,
       member: user,
       last_message: "",
-      last_message_at: new Date().toISOString(),
+      last_message_at: newConv.last_message_at || new Date().toISOString(),
       unread: 0
     };
+
     state.conversations.unshift(conv);
-    if (state.isDemo) {
-      DEMO_MESSAGES[newId] = [];
-    }
+
+    // Close search overlay
+    const overlay = $("#search-overlay");
+    if (overlay) overlay.classList.add("hidden");
+    const overlayInput = $("#overlay-search-input");
+    if (overlayInput) overlayInput.value = "";
+    state.searchResults = [];
+
+    openConversation(conv);
+    renderConversationList();
+  } catch (err) {
+    console.error("Start chat error:", err);
+    showToast("Failed to start chat", "error");
   }
+}
 
   const overlay = $("#search-overlay");
   if (overlay) overlay.classList.add("hidden");
   const overlayInput = $("#overlay-search-input");
   if (overlayInput) overlayInput.value = "";
   state.searchResults = [];
-
-  openConversation(conv);
-  renderConversationList();
-}
 
 function openSearchOverlay() {
   const overlay = $("#search-overlay");
