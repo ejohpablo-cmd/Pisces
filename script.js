@@ -805,37 +805,98 @@ function renderSearchResults() {
 }
 
 async function startChatWithUser(user) {
+  // Check if conversation already exists locally
   let conv = state.conversations.find(function (c) {
-    return c.member.id === user.id;
+    return c.member && c.member.id === user.id;
   });
 
-  if (!conv) {
-    const newId = generateId();
-    conv = {
-      id: newId,
-      member: user,
-      last_message: "",
-      last_message_at: new Date().toISOString(),
-      unread: 0
-    };
-    state.conversations.unshift(conv);
-    if (state.isDemo) DEMO_MESSAGES[newId] = [];
+  if (conv) {
+    // Already exists → just open it
+    if ($("#search-overlay")) $("#search-overlay").classList.add("hidden");
+    if ($("#overlay-search-input")) $("#overlay-search-input").value = "";
+    state.searchResults = [];
+    openConversation(conv);
+    return;
   }
 
-  if ($("#search-overlay")) $("#search-overlay").classList.add("hidden");
-  if ($("#overlay-search-input")) $("#overlay-search-input").value = "";
-  state.searchResults = [];
-  openConversation(conv);
-  renderConversationList();
+  // Create new conversation
+  try {
+    showToast("Starting chat...", "info");
+
+    if (state.isDemo) {
+      // Demo mode
+      const newId = generateId();
+      conv = {
+        id: newId,
+        member: user,
+        last_message: "",
+        last_message_at: new Date().toISOString(),
+        unread: 0
+      };
+      state.conversations.unshift(conv);
+      DEMO_MESSAGES[newId] = [];
+    } else {
+      // Real Supabase mode
+      // 1. Create conversation
+      const convResult = await supabaseClient
+        .from("conversations")
+        .insert({})
+        .select()
+        .single();
+
+      if (convResult.error) throw convResult.error;
+
+      const conversationId = convResult.data.id;
+
+      // 2. Add both users as members
+      const membersResult = await supabaseClient
+        .from("conversation_members")
+        .insert([
+          { conversation_id: conversationId, user_id: state.user.id },
+          { conversation_id: conversationId, user_id: user.id }
+        ]);
+
+      if (membersResult.error) throw membersResult.error;
+
+      // 3. Create local conversation object
+      conv = {
+        id: conversationId,
+        member: user,
+        last_message: "",
+        last_message_at: new Date().toISOString(),
+        unread: 0
+      };
+      state.conversations.unshift(conv);
+    }
+
+    // Close search and open chat
+    if ($("#search-overlay")) $("#search-overlay").classList.add("hidden");
+    if ($("#overlay-search-input")) $("#overlay-search-input").value = "";
+    state.searchResults = [];
+
+    openConversation(conv);
+    renderConversationList();
+    showToast("Chat started", "success");
+
+  } catch (err) {
+    console.error("Start chat error:", err);
+    showToast(err.message || "Failed to start chat", "error");
+  }
 }
 
 function openSearchOverlay() {
-  if ($("#search-overlay")) $("#search-overlay").classList.remove("hidden");
+  if ($("#search-overlay")) {
+    $("#search-overlay").classList.remove("hidden");
+  }
+
   const overlayInput = $("#overlay-search-input");
   if (overlayInput) {
     overlayInput.value = "";
-    setTimeout(function () { overlayInput.focus(); }, 100);
+    setTimeout(function () {
+      overlayInput.focus();
+    }, 100);
   }
+
   state.searchResults = [];
   renderSearchResults();
 }
@@ -1228,4 +1289,4 @@ async function boot() {
   else enterMainApp();
 }
 
-document.addEventListener("DOMContentLoaded", boot);
+document.addEventListener("DOMContentLoaded", boot); 
