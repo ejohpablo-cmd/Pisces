@@ -1,6 +1,5 @@
 /* ============================================================
-   PISCES — Messaging Application
-   Clean fixed version
+   PISCES — Clean Working Version
    ============================================================ */
 
 // ============================================================
@@ -37,62 +36,16 @@ const state = {
 
 // Demo data
 const DEMO_USERS = [
-  {
-    id: "demo-user-1",
-    username: "luna",
-    display_name: "Luna Rivera",
-    avatar_url: null,
-    is_online: true,
-    last_seen: new Date().toISOString()
-  },
-  {
-    id: "demo-user-2",
-    username: "kai_chen",
-    display_name: "Kai Chen",
-    avatar_url: null,
-    is_online: false,
-    last_seen: new Date(Date.now() - 3600000).toISOString()
-  },
-  {
-    id: "demo-user-3",
-    username: "aria",
-    display_name: "Aria Sol",
-    avatar_url: null,
-    is_online: true,
-    last_seen: new Date().toISOString()
-  },
-  {
-    id: "demo-user-4",
-    username: "noah",
-    display_name: "Noah Blake",
-    avatar_url: null,
-    is_online: false,
-    last_seen: new Date(Date.now() - 86400000).toISOString()
-  }
+  { id: "demo-user-1", username: "luna", display_name: "Luna Rivera", avatar_url: null, is_online: true, last_seen: new Date().toISOString() },
+  { id: "demo-user-2", username: "kai_chen", display_name: "Kai Chen", avatar_url: null, is_online: false, last_seen: new Date(Date.now() - 3600000).toISOString() },
+  { id: "demo-user-3", username: "aria", display_name: "Aria Sol", avatar_url: null, is_online: true, last_seen: new Date().toISOString() },
+  { id: "demo-user-4", username: "noah", display_name: "Noah Blake", avatar_url: null, is_online: false, last_seen: new Date(Date.now() - 86400000).toISOString() }
 ];
 
 const DEMO_CONVERSATIONS = [
-  {
-    id: "conv-1",
-    member: DEMO_USERS[0],
-    last_message: "Hey! Are you free this weekend?",
-    last_message_at: new Date(Date.now() - 300000).toISOString(),
-    unread: 2
-  },
-  {
-    id: "conv-2",
-    member: DEMO_USERS[1],
-    last_message: "Thanks for the help earlier",
-    last_message_at: new Date(Date.now() - 7200000).toISOString(),
-    unread: 0
-  },
-  {
-    id: "conv-3",
-    member: DEMO_USERS[2],
-    last_message: "The design looks amazing!",
-    last_message_at: new Date(Date.now() - 86400000).toISOString(),
-    unread: 0
-  }
+  { id: "conv-1", member: DEMO_USERS[0], last_message: "Hey! Are you free this weekend?", last_message_at: new Date(Date.now() - 300000).toISOString(), unread: 2 },
+  { id: "conv-2", member: DEMO_USERS[1], last_message: "Thanks for the help earlier", last_message_at: new Date(Date.now() - 7200000).toISOString(), unread: 0 },
+  { id: "conv-3", member: DEMO_USERS[2], last_message: "The design looks amazing!", last_message_at: new Date(Date.now() - 86400000).toISOString(), unread: 0 }
 ];
 
 const DEMO_MESSAGES = {
@@ -129,7 +82,7 @@ const screens = {
 };
 
 function showScreen(name) {
-  Object.values(screens).forEach((s) => {
+  Object.values(screens).forEach(function (s) {
     if (s) {
       s.classList.remove("active");
       s.classList.add("hidden");
@@ -151,9 +104,7 @@ function showToast(message, type) {
   container.appendChild(toast);
   setTimeout(function () {
     toast.style.opacity = "0";
-    setTimeout(function () {
-      toast.remove();
-    }, 300);
+    setTimeout(function () { toast.remove(); }, 300);
   }, 3000);
 }
 
@@ -166,9 +117,7 @@ function formatTime(iso) {
   if (diff < 86400000 && d.getDate() === now.getDate()) {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
-  if (diff < 604800000) {
-    return d.toLocaleDateString([], { weekday: "short" });
-  }
+  if (diff < 604800000) return d.toLocaleDateString([], { weekday: "short" });
   return d.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
@@ -188,14 +137,7 @@ function formatDateSeparator(iso) {
 
 function getInitials(name) {
   if (!name) return "?";
-  return name
-    .split(" ")
-    .map(function (w) {
-      return w[0];
-    })
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  return name.split(" ").map(function (w) { return w[0]; }).join("").toUpperCase().slice(0, 2);
 }
 
 function escapeHtml(text) {
@@ -205,15 +147,9 @@ function escapeHtml(text) {
 }
 
 function validateUsername(username) {
-  if (!username || username.length < 3) {
-    return { valid: false, error: "Username must be at least 3 characters." };
-  }
-  if (username.length > 20) {
-    return { valid: false, error: "Username must be 20 characters or less." };
-  }
-  if (!/^[a-zA-Z0-9._]+$/.test(username)) {
-    return { valid: false, error: "Only letters, numbers, underscores and periods allowed." };
-  }
+  if (!username || username.length < 3) return { valid: false, error: "Username must be at least 3 characters." };
+  if (username.length > 20) return { valid: false, error: "Username must be 20 characters or less." };
+  if (!/^[a-zA-Z0-9._]+$/.test(username)) return { valid: false, error: "Only letters, numbers, underscores and periods allowed." };
   return { valid: true };
 }
 
@@ -223,9 +159,7 @@ function generateId() {
 
 function safeOn(id, event, handler) {
   const el = document.getElementById(id);
-  if (el) {
-    el.addEventListener(event, handler);
-  }
+  if (el) el.addEventListener(event, handler);
 }
 
 // ============================================================
@@ -270,9 +204,7 @@ async function signInWithGoogle() {
 
   try {
     if (state.isDemo) {
-      await new Promise(function (r) {
-        setTimeout(r, 1000);
-      });
+      await new Promise(function (r) { setTimeout(r, 1000); });
 
       state.user = {
         id: "demo-me",
@@ -300,10 +232,7 @@ async function signInWithGoogle() {
       provider: "google",
       options: {
         redirectTo: window.location.origin + window.location.pathname,
-        queryParams: {
-          access_type: "offline",
-          prompt: "consent"
-        }
+        queryParams: { access_type: "offline", prompt: "consent" }
       }
     });
 
@@ -335,7 +264,6 @@ async function signOut() {
   state.subscriptions = [];
 
   showScreen("auth");
-
   const modal = $("#logout-modal");
   if (modal) modal.classList.add("hidden");
 }
@@ -530,6 +458,7 @@ function initProfileSetup() {
     }
   });
 }
+
 // ============================================================
 // 7. CONVERSATIONS
 // ============================================================
@@ -539,88 +468,12 @@ async function loadConversations() {
     renderConversationList();
     return;
   }
-
   try {
-    // Get all conversation IDs the current user belongs to
-    const { data: memberRows, error: memberError } = await supabaseClient
-      .from("conversation_members")
-      .select("conversation_id")
-      .eq("user_id", state.user.id);
-
-    if (memberError) throw memberError;
-
-    if (!memberRows || memberRows.length === 0) {
-      state.conversations = [];
-      renderConversationList();
-      return;
-    }
-
-    const convIds = memberRows.map((r) => r.conversation_id);
-
-    // Get the conversations
-    const { data: convs, error: convError } = await supabaseClient
-      .from("conversations")
-      .select("*")
-      .in("id", convIds)
-      .order("last_message_at", { ascending: false });
-
-    if (convError) throw convError;
-
-    // Get all members of these conversations
-    const { data: allMembers, error: allMembersError } = await supabaseClient
-      .from("conversation_members")
-      .select("conversation_id, user_id")
-      .in("conversation_id", convIds);
-
-    if (allMembersError) throw allMembersError;
-
-    // Get profiles of the other users
-    const otherUserIds = allMembers
-      .filter((m) => m.user_id !== state.user.id)
-      .map((m) => m.user_id);
-
-    let profilesMap = {};
-    if (otherUserIds.length > 0) {
-      const { data: profiles, error: profilesError } = await supabaseClient
-        .from("profiles")
-        .select("id, username, display_name, avatar_url, is_online, last_seen")
-        .in("id", otherUserIds);
-
-      if (profilesError) throw profilesError;
-
-      profiles.forEach((p) => {
-        profilesMap[p.id] = p;
-      });
-    }
-
-    // Build the final conversation list
-    state.conversations = (convs || []).map((conv) => {
-      const otherMember = allMembers.find(
-        (m) => m.conversation_id === conv.id && m.user_id !== state.user.id
-      );
-      const member = otherMember ? profilesMap[otherMember.user_id] : null;
-
-      return {
-        id: conv.id,
-        member: member || {
-          id: "unknown",
-          username: "unknown",
-          display_name: "Unknown User",
-          avatar_url: null,
-          is_online: false
-        },
-        last_message: conv.last_message || "",
-        last_message_at: conv.last_message_at || conv.created_at,
-        unread: 0
-      };
-    });
-
-    renderConversationList();
-  } catch (err) {
-    console.error("Load conversations error:", err);
-    showToast("Failed to load conversations", "error");
     state.conversations = [];
     renderConversationList();
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to load conversations", "error");
   }
 }
 
@@ -628,7 +481,6 @@ function renderConversationList() {
   const list = $("#conversation-list");
   const empty = $("#empty-conversations");
   if (!list) return;
-
   list.innerHTML = "";
 
   if (!state.conversations.length) {
@@ -651,47 +503,30 @@ function renderConversationList() {
     const member = conv.member;
     const initials = getInitials(member.display_name);
 
-    let avatarHtml = "";
-    if (member.avatar_url) {
-      avatarHtml = '<img class="conv-avatar" src="' + escapeHtml(member.avatar_url) + '" alt="" />';
-    } else {
-      avatarHtml = '<div class="conv-avatar-fallback">' + initials + "</div>";
-    }
+    let avatarHtml = member.avatar_url
+      ? '<img class="conv-avatar" src="' + escapeHtml(member.avatar_url) + '" alt="" />'
+      : '<div class="conv-avatar-fallback">' + initials + "</div>";
 
     let onlineHtml = member.is_online ? '<span class="online-dot"></span>' : "";
-    let unreadHtml = "";
-    if (conv.unread > 0) {
-      unreadHtml = '<span class="unread-badge">' + (conv.unread > 99 ? "99+" : conv.unread) + "</span>";
-    }
+    let unreadHtml = conv.unread > 0
+      ? '<span class="unread-badge">' + (conv.unread > 99 ? "99+" : conv.unread) + "</span>"
+      : "";
 
     item.innerHTML =
-      '<div class="conv-avatar-wrap">' +
-      avatarHtml +
-      onlineHtml +
-      "</div>" +
+      '<div class="conv-avatar-wrap">' + avatarHtml + onlineHtml + "</div>" +
       '<div class="conv-info">' +
       '<div class="conv-top">' +
-      '<span class="conv-name">' +
-      escapeHtml(member.display_name) +
-      "</span>" +
-      '<span class="conv-time">' +
-      formatTime(conv.last_message_at) +
-      "</span>" +
+      '<span class="conv-name">' + escapeHtml(member.display_name) + "</span>" +
+      '<span class="conv-time">' + formatTime(conv.last_message_at) + "</span>" +
       "</div>" +
       '<div class="conv-bottom">' +
-      '<span class="conv-preview">' +
-      escapeHtml(conv.last_message || "") +
-      "</span>" +
+      '<span class="conv-preview">' + escapeHtml(conv.last_message || "") + "</span>" +
       unreadHtml +
       "</div>" +
-      '<span class="conv-username">@' +
-      escapeHtml(member.username) +
-      "</span>" +
+      '<span class="conv-username">@' + escapeHtml(member.username) + "</span>" +
       "</div>";
 
-    item.addEventListener("click", function () {
-      openConversation(conv);
-    });
+    item.addEventListener("click", function () { openConversation(conv); });
     list.appendChild(item);
   });
 }
@@ -732,10 +567,8 @@ function openConversation(conv) {
     else onlineDot.classList.add("hidden");
   }
 
-  const nameEl = $("#chat-display-name");
-  const statusEl = $("#chat-status");
-  if (nameEl) nameEl.textContent = member.display_name;
-  if (statusEl) statusEl.textContent = member.is_online ? "online" : "@" + member.username;
+  if ($("#chat-display-name")) $("#chat-display-name").textContent = member.display_name;
+  if ($("#chat-status")) $("#chat-status").textContent = member.is_online ? "online" : "@" + member.username;
 
   conv.unread = 0;
   renderConversationList();
@@ -744,13 +577,9 @@ function openConversation(conv) {
 
 function closeChat() {
   state.activeConversation = null;
-  const chatView = $("#chat-view");
-  const welcome = $("#chat-welcome");
-  const mainApp = $("#main-app");
-
-  if (chatView) chatView.classList.add("hidden");
-  if (welcome) welcome.classList.remove("hidden");
-  if (mainApp) mainApp.classList.remove("chat-open");
+  if ($("#chat-view")) $("#chat-view").classList.add("hidden");
+  if ($("#chat-welcome")) $("#chat-welcome").classList.remove("hidden");
+  if ($("#main-app")) $("#main-app").classList.remove("chat-open");
   renderConversationList();
 }
 
@@ -786,7 +615,6 @@ function renderMessages(messages) {
   const list = $("#messages-list");
   if (!list) return;
   list.innerHTML = "";
-
   let lastDate = null;
 
   messages.forEach(function (msg) {
@@ -805,25 +633,18 @@ function renderMessages(messages) {
 
     let statusIcon = "";
     if (isSent) {
-      if (msg.is_read) {
-        statusIcon = '<span class="message-status read"><i data-lucide="check-check"></i></span>';
-      } else {
-        statusIcon = '<span class="message-status"><i data-lucide="check"></i></span>';
-      }
+      statusIcon = msg.is_read
+        ? '<span class="message-status read"><i data-lucide="check-check"></i></span>'
+        : '<span class="message-status"><i data-lucide="check"></i></span>';
     }
 
     el.innerHTML =
       '<div class="message-bubble">' +
-      '<div class="message-text">' +
-      escapeHtml(msg.content) +
-      "</div>" +
+      '<div class="message-text">' + escapeHtml(msg.content) + "</div>" +
       '<div class="message-meta">' +
-      '<span class="message-time">' +
-      formatMessageTime(msg.created_at) +
-      "</span>" +
+      '<span class="message-time">' + formatMessageTime(msg.created_at) + "</span>" +
       statusIcon +
-      "</div>" +
-      "</div>";
+      "</div></div>";
 
     list.appendChild(el);
   });
@@ -860,7 +681,6 @@ async function sendMessage() {
     is_read: false
   };
 
-  // Optimistic UI update
   if (!state.messages[state.activeConversation.id]) {
     state.messages[state.activeConversation.id] = [];
   }
@@ -878,16 +698,13 @@ async function sendMessage() {
 
   try {
     if (state.isDemo) {
-      await new Promise(function (r) {
-        setTimeout(r, 300);
-      });
+      await new Promise(function (r) { setTimeout(r, 300); });
       if (!DEMO_MESSAGES[state.activeConversation.id]) {
         DEMO_MESSAGES[state.activeConversation.id] = [];
       }
       DEMO_MESSAGES[state.activeConversation.id].push(msg);
     } else {
-      // Insert message
-      const { data: savedMsg, error: msgError } = await supabaseClient
+      const result = await supabaseClient
         .from("messages")
         .insert({
           conversation_id: state.activeConversation.id,
@@ -897,32 +714,17 @@ async function sendMessage() {
         })
         .select()
         .single();
+      if (result.error) throw result.error;
 
-      if (msgError) throw msgError;
-
-      // Update conversation last_message
-      await supabaseClient
-        .from("conversations")
-        .update({
-          last_message: content,
-          last_message_at: savedMsg.created_at,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", state.activeConversation.id);
-
-      // Replace temp message with real one
       const idx = state.messages[state.activeConversation.id].findIndex(function (m) {
         return m.id === tempId;
       });
       if (idx !== -1) {
-        state.messages[state.activeConversation.id][idx] = savedMsg;
-        renderMessages(state.messages[state.activeConversation.id]);
+        state.messages[state.activeConversation.id][idx] = result.data;
       }
     }
   } catch (err) {
-    console.error("Send message error:", err);
     showToast("Failed to send message", "error");
-    // Remove optimistic message
     state.messages[state.activeConversation.id] = state.messages[state.activeConversation.id].filter(function (m) {
       return m.id !== tempId;
     });
@@ -931,7 +733,6 @@ async function sendMessage() {
 
   if (sendBtn) sendBtn.disabled = false;
 }
-
 
 // ============================================================
 // 9. SEARCH
@@ -960,7 +761,6 @@ async function searchUsers(query) {
       .or("username.ilike.%" + q + "%,display_name.ilike.%" + q + "%")
       .neq("id", state.user.id)
       .limit(20);
-
     if (result.error) throw result.error;
     state.searchResults = result.data || [];
     renderSearchResults();
@@ -975,11 +775,9 @@ function renderSearchResults() {
 
   if (!state.searchResults.length) {
     const q = $("#overlay-search-input") ? $("#overlay-search-input").value.trim() : "";
-    if (q) {
-      container.innerHTML = '<div class="search-hint"><p>No users found for "' + escapeHtml(q) + '"</p></div>';
-    } else {
-      container.innerHTML = '<div class="search-hint"><p>Search for people by their @username</p></div>';
-    }
+    container.innerHTML = q
+      ? '<div class="search-hint"><p>No users found for "' + escapeHtml(q) + '"</p></div>'
+      : '<div class="search-hint"><p>Search for people by their @username</p></div>';
     return;
   }
 
@@ -989,121 +787,55 @@ function renderSearchResults() {
     item.className = "search-result-item";
     const initials = getInitials(user.display_name);
 
-    let avatarHtml = "";
-    if (user.avatar_url) {
-      avatarHtml = '<img class="conv-avatar" src="' + escapeHtml(user.avatar_url) + '" style="width:48px;height:48px" />';
-    } else {
-      avatarHtml = '<div class="conv-avatar-fallback" style="width:48px;height:48px;font-size:1rem">' + initials + "</div>";
-    }
+    let avatarHtml = user.avatar_url
+      ? '<img class="conv-avatar" src="' + escapeHtml(user.avatar_url) + '" style="width:48px;height:48px" />'
+      : '<div class="conv-avatar-fallback" style="width:48px;height:48px;font-size:1rem">' + initials + "</div>";
 
     item.innerHTML =
-      '<div class="conv-avatar-wrap">' +
-      avatarHtml +
-      (user.is_online ? '<span class="online-dot"></span>' : "") +
-      "</div>" +
+      '<div class="conv-avatar-wrap">' + avatarHtml +
+      (user.is_online ? '<span class="online-dot"></span>' : "") + "</div>" +
       '<div class="search-result-info">' +
-      '<div class="search-result-name">' +
-      escapeHtml(user.display_name) +
-      "</div>" +
-      '<div class="search-result-username">@' +
-      escapeHtml(user.username) +
-      "</div>" +
+      '<div class="search-result-name">' + escapeHtml(user.display_name) + "</div>" +
+      '<div class="search-result-username">@' + escapeHtml(user.username) + "</div>" +
       "</div>";
 
-    item.addEventListener("click", function () {
-      startChatWithUser(user);
-    });
+    item.addEventListener("click", function () { startChatWithUser(user); });
     container.appendChild(item);
   });
 }
 
 async function startChatWithUser(user) {
-  // Check if a conversation with this user already exists
   let conv = state.conversations.find(function (c) {
-    return c.member && c.member.id === user.id;
+    return c.member.id === user.id;
   });
 
-  if (conv) {
-    // Already exists → just open it
-    const overlay = $("#search-overlay");
-    if (overlay) overlay.classList.add("hidden");
-    const overlayInput = $("#overlay-search-input");
-    if (overlayInput) overlayInput.value = "";
-    state.searchResults = [];
-    openConversation(conv);
-    return;
-  }
-
-  // Create a new conversation in the database
-  try {
-    showToast("Starting chat...", "info");
-
-    // 1. Create conversation
-    const { data: newConv, error: convError } = await supabaseClient
-      .from("conversations")
-      .insert({
-        last_message: "",
-        last_message_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (convError) throw convError;
-
-    // 2. Add both members
-    const { error: membersError } = await supabaseClient
-      .from("conversation_members")
-      .insert([
-        { conversation_id: newConv.id, user_id: state.user.id },
-        { conversation_id: newConv.id, user_id: user.id }
-      ]);
-
-    if (membersError) throw membersError;
-
-    // 3. Build local conversation object
+  if (!conv) {
+    const newId = generateId();
     conv = {
-      id: newConv.id,
+      id: newId,
       member: user,
       last_message: "",
-      last_message_at: newConv.last_message_at || new Date().toISOString(),
+      last_message_at: new Date().toISOString(),
       unread: 0
     };
-
     state.conversations.unshift(conv);
-
-    // Close search overlay
-    const overlay = $("#search-overlay");
-    if (overlay) overlay.classList.add("hidden");
-    const overlayInput = $("#overlay-search-input");
-    if (overlayInput) overlayInput.value = "";
-    state.searchResults = [];
-
-    openConversation(conv);
-    renderConversationList();
-  } catch (err) {
-    console.error("Start chat error:", err);
-    showToast("Failed to start chat", "error");
+    if (state.isDemo) DEMO_MESSAGES[newId] = [];
   }
+
+  if ($("#search-overlay")) $("#search-overlay").classList.add("hidden");
+  if ($("#overlay-search-input")) $("#overlay-search-input").value = "";
+  state.searchResults = [];
+  openConversation(conv);
+  renderConversationList();
 }
 
-  const overlay = $("#search-overlay");
-  if (overlay) overlay.classList.add("hidden");
-  const overlayInput = $("#overlay-search-input");
-  if (overlayInput) overlayInput.value = "";
-  state.searchResults = [];
-
 function openSearchOverlay() {
-  const overlay = $("#search-overlay");
-  if (overlay) overlay.classList.remove("hidden");
-
+  if ($("#search-overlay")) $("#search-overlay").classList.remove("hidden");
   const overlayInput = $("#overlay-search-input");
   if (overlayInput) {
     overlayInput.value = "";
-    setTimeout(function () {
-      overlayInput.focus();
-    }, 100);
+    setTimeout(function () { overlayInput.focus(); }, 100);
   }
-
   state.searchResults = [];
   renderSearchResults();
 }
@@ -1127,16 +859,12 @@ function renderProfilePage() {
     }
   }
 
-  const nameEl = $("#profile-page-name");
-  const userEl = $("#profile-page-username");
-  const joinedEl = $("#profile-page-joined");
+  if ($("#profile-page-name")) $("#profile-page-name").textContent = (state.profile && state.profile.display_name) || "User";
+  if ($("#profile-page-username")) $("#profile-page-username").textContent = "@" + ((state.profile && state.profile.username) || "username");
 
-  if (nameEl) nameEl.textContent = (state.profile && state.profile.display_name) || "User";
-  if (userEl) userEl.textContent = "@" + ((state.profile && state.profile.username) || "username");
-
-  if (state.profile && state.profile.created_at && joinedEl) {
+  if (state.profile && state.profile.created_at && $("#profile-page-joined")) {
     const d = new Date(state.profile.created_at);
-    joinedEl.textContent = "Joined " + d.toLocaleDateString([], { month: "long", year: "numeric" });
+    $("#profile-page-joined").textContent = "Joined " + d.toLocaleDateString([], { month: "long", year: "numeric" });
   }
 }
 
@@ -1150,8 +878,7 @@ function updateSendButton() {
   const input = $("#message-input");
   const btn = $("#btn-send");
   if (!btn) return;
-  const hasText = input && input.value.trim().length > 0;
-  btn.disabled = !hasText;
+  btn.disabled = !(input && input.value.trim().length > 0);
 }
 
 // ============================================================
@@ -1180,16 +907,14 @@ function addThemeSettings() {
   themeSection.innerHTML =
     "<h3>Appearance</h3>" +
     '<div class="settings-item">' +
-    '<i data-lucide="sun-moon"></i>' +
-    "<span>Theme</span>" +
+    '<i data-lucide="sun-moon"></i><span>Theme</span>' +
     '<select id="theme-select" class="settings-select">' +
     '<option value="default">Orange (Default)</option>' +
     '<option value="dark">Dark Mode</option>' +
     '<option value="blue">Blue</option>' +
     '<option value="green">Green</option>' +
     '<option value="purple">Purple</option>' +
-    "</select>" +
-    "</div>";
+    "</select></div>";
 
   if (settingsContent.children.length > 1) {
     settingsContent.insertBefore(themeSection, settingsContent.children[1]);
@@ -1224,12 +949,9 @@ function openEditProfile() {
   const currentUser = state.profile.username || "";
   const currentBio = state.profile.bio || "";
 
-  let avatarHtml = "";
-  if (state.profile.avatar_url) {
-    avatarHtml = '<img src="' + state.profile.avatar_url + '" alt="Avatar" />';
-  } else {
-    avatarHtml = '<div class="avatar-fallback large">' + getInitials(currentName) + "</div>";
-  }
+  let avatarHtml = state.profile.avatar_url
+    ? '<img src="' + state.profile.avatar_url + '" alt="Avatar" />'
+    : '<div class="avatar-fallback large">' + getInitials(currentName) + "</div>";
 
   content.innerHTML =
     '<div class="profile-avatar-section">' +
@@ -1251,7 +973,6 @@ function openEditProfile() {
 
   if (window.lucide) lucide.createIcons();
 
-  // Avatar change
   const avatarInput = document.getElementById("edit-avatar-input");
   if (avatarInput) {
     avatarInput.addEventListener("change", function (e) {
@@ -1260,29 +981,22 @@ function openEditProfile() {
       const reader = new FileReader();
       reader.onload = function (ev) {
         const preview = document.getElementById("edit-avatar-preview");
-        if (preview) {
-          preview.innerHTML = '<img src="' + ev.target.result + '" alt="Avatar" />';
-        }
+        if (preview) preview.innerHTML = '<img src="' + ev.target.result + '" alt="Avatar" />';
         state._tempAvatar = ev.target.result;
       };
       reader.readAsDataURL(file);
     });
   }
 
-  // Save button
   const form = document.getElementById("edit-profile-form");
   if (form) {
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       e.stopPropagation();
 
-      const displayNameEl = document.getElementById("edit-displayname");
-      const usernameEl = document.getElementById("edit-username");
-      const bioEl = document.getElementById("edit-bio");
-
-      const display_name = displayNameEl ? displayNameEl.value.trim() : "";
-      const username = usernameEl ? usernameEl.value.trim().toLowerCase() : "";
-      const bio = bioEl ? bioEl.value.trim() : "";
+      const display_name = document.getElementById("edit-displayname").value.trim();
+      const username = document.getElementById("edit-username").value.trim().toLowerCase();
+      const bio = document.getElementById("edit-bio").value.trim();
 
       if (!display_name || !username) {
         showToast("Name and username are required", "error");
@@ -1297,17 +1011,14 @@ function openEditProfile() {
 
       try {
         showToast("Saving...", "info");
-
         await saveProfile({
           username: username,
           display_name: display_name,
           avatar_url: state._tempAvatar || state.profile.avatar_url,
           bio: bio
         });
-
         showToast("Profile updated successfully!", "success");
         renderProfilePage();
-
       } catch (err) {
         console.error("Save profile error:", err);
         showToast(err.message || "Failed to save profile", "error");
@@ -1380,10 +1091,8 @@ function bindEvents() {
   safeOn("btn-send", "click", sendMessage);
   safeOn("fab-new-chat", "click", openSearchOverlay);
   safeOn("search-overlay-back", "click", function () {
-    const overlay = $("#search-overlay");
-    if (overlay) overlay.classList.add("hidden");
-    const input = $("#overlay-search-input");
-    if (input) input.value = "";
+    if ($("#search-overlay")) $("#search-overlay").classList.add("hidden");
+    if ($("#overlay-search-input")) $("#overlay-search-input").value = "";
   });
   safeOn("empty-new-chat", "click", openSearchOverlay);
 
@@ -1439,26 +1148,24 @@ function bindEvents() {
 
   window.addEventListener("online", function () {
     state.isOnline = true;
-    const banner = $("#offline-banner");
-    if (banner) banner.classList.add("hidden");
+    if ($("#offline-banner")) $("#offline-banner").classList.add("hidden");
     showToast("Back online", "success");
   });
 
   window.addEventListener("offline", function () {
     state.isOnline = false;
-    const banner = $("#offline-banner");
-    if (banner) banner.classList.remove("hidden");
+    if ($("#offline-banner")) $("#offline-banner").classList.remove("hidden");
   });
 }
+
 // ============================================================
 // 14. BOOT
 // ============================================================
 async function enterMainApp() {
   showScreen("main");
   await loadConversations();
-  if (state.isDemo) {
-    const banner = $("#dev-banner");
-    if (banner) banner.classList.remove("hidden");
+  if (state.isDemo && $("#dev-banner")) {
+    $("#dev-banner").classList.remove("hidden");
   }
 }
 
@@ -1476,14 +1183,10 @@ async function handleSession(session) {
 }
 
 async function boot() {
-  if (window.lucide) {
-    lucide.createIcons();
-  }
+  if (window.lucide) lucide.createIcons();
   initTheme();
 
-  await new Promise(function (r) {
-    setTimeout(r, 1100);
-  });
+  await new Promise(function (r) { setTimeout(r, 1100); });
 
   initProfileSetup();
   bindEvents();
@@ -1520,68 +1223,9 @@ async function boot() {
 
   // Demo mode
   const authResult = await initAuth();
-  if (!authResult.authenticated) {
-    showScreen("auth");
-  } else if (authResult.needsSetup) {
-    showScreen("setup");
-  } else {
-    enterMainApp();
-  }
+  if (!authResult.authenticated) showScreen("auth");
+  else if (authResult.needsSetup) showScreen("setup");
+  else enterMainApp();
 }
 
 document.addEventListener("DOMContentLoaded", boot);
-
-// ============================================================
-// Better protection for avatar selection
-// ============================================================
-let isSelectingAvatar = false;
-
-document.addEventListener("visibilitychange", function () {
-  if (document.visibilityState === "hidden") {
-    isSelectingAvatar = true;
-  } else {
-    // When user comes back from file picker
-    setTimeout(function () {
-      isSelectingAvatar = false;
-    }, 800);
-  }
-});
-
-// Protect the current screen while selecting avatar
-const originalShowScreen = showScreen;
-showScreen = function (name) {
-  if (isSelectingAvatar && (name === "main" || name === "auth")) {
-    // Ignore forced navigation back to home while selecting picture
-    console.log("Blocked unwanted screen change during avatar select");
-    return;
-  }
-  originalShowScreen(name);
-};
-
-// Reset the flag after a short time
-document.addEventListener("change", function (e) {
-  if (e.target && e.target.type === "file") {
-    setTimeout(function () {
-      isSelectingAvatar = false;
-    }, 1500);
-  }
-});
-
-// Update browser theme-color when theme changes
-function updateThemeColor() {
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (!meta) return;
-
-  const primary = getComputedStyle(document.body).getPropertyValue('--primary').trim() || '#FF6B00';
-  meta.setAttribute('content', primary);
-}
-
-// Call it after applying theme
-const oldApplyTheme = applyTheme;
-applyTheme = function(theme) {
-  oldApplyTheme(theme);
-  setTimeout(updateThemeColor, 50);
-};
-
-// Initial call
-updateThemeColor();
