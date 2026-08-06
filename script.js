@@ -468,11 +468,67 @@ async function loadConversations() {
     renderConversationList();
     return;
   }
+
   try {
-    state.conversations = [];
+    // Get all conversation memberships for current user
+    const { data: memberships, error } = await supabaseClient
+      .from("conversation_members")
+      .select(`
+        conversation_id,
+        conversations (
+          id,
+          updated_at
+        )
+      `)
+      .eq("user_id", state.user.id);
+
+    if (error) throw error;
+
+    if (!memberships || memberships.length === 0) {
+      state.conversations = [];
+      renderConversationList();
+      return;
+    }
+
+    const convs = [];
+
+    for (const mem of memberships) {
+      const convId = mem.conversation_id;
+
+      // Get the other member
+      const { data: members } = await supabaseClient
+        .from("conversation_members")
+        .select("user_id, profiles(id, username, display_name, avatar_url, is_online, last_seen)")
+        .eq("conversation_id", convId)
+        .neq("user_id", state.user.id);
+
+      if (!members || members.length === 0) continue;
+
+      const other = members[0].profiles;
+
+      // Get last message
+      const { data: lastMsgs } = await supabaseClient
+        .from("messages")
+        .select("content, created_at, sender_id, is_read")
+        .eq("conversation_id", convId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      const lastMsg = lastMsgs && lastMsgs[0] ? lastMsgs[0] : null;
+
+      convs.push({
+        id: convId,
+        member: other,
+        last_message: lastMsg ? lastMsg.content : "",
+        last_message_at: lastMsg ? lastMsg.created_at : (mem.conversations ? mem.conversations.updated_at : new Date().toISOString()),
+        unread: 0
+      });
+    }
+
+    state.conversations = convs;
     renderConversationList();
   } catch (err) {
-    console.error(err);
+    console.error("Load conversations error:", err);
     showToast("Failed to load conversations", "error");
   }
 }
@@ -1088,6 +1144,56 @@ function openEditProfile() {
   }
 }
 
+function setupRealtime() {
+  if (state.isDemo || !supabaseClient) return;
+
+  // Listen for new messages
+  const channel = supabaseClient
+    .channel("public:messages")
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "messages" },
+      function (payload) {
+        const msg = payload.new;
+
+        // If this message belongs to the currently open chat
+        if (state.activeConversation && state.activeConversation.id === msg.conversation_id) {
+          if (!state.messages[msg.conversation_id]) {
+            state.messages[msg.conversation_id] = [];
+          }
+          // Avoid duplicates
+          const exists = state.messages[msg.conversation_id].some(function (m) {
+            return m.id === msg.id;
+          });
+          if (!exists) {
+            state.messages[msg.conversation_id].push(msg);
+            renderMessages(state.messages[msg.conversation_id]);
+            scrollToBottom();
+          }
+        }
+
+        // Update conversation list preview
+        const conv = state.conversations.find(function (c) {
+          return c.id === msg.conversation_id;
+        });
+        if (conv) {
+          conv.last_message = msg.content;
+          conv.last_message_at = msg.created_at;
+          if (msg.sender_id !== state.user.id) {
+            conv.unread = (conv.unread || 0) + 1;
+          }
+          renderConversationList();
+        } else {
+          // New conversation appeared → reload list
+          loadConversations();
+        }
+      }
+    )
+    .subscribe();
+
+  state.subscriptions.push(channel);
+}
+
 // ============================================================
 // 13. EVENTS
 // ============================================================
@@ -1225,6 +1331,7 @@ function bindEvents() {
 async function enterMainApp() {
   showScreen("main");
   await loadConversations();
+  setupRealtime();                       // ← this line must be here
   if (state.isDemo && $("#dev-banner")) {
     $("#dev-banner").classList.remove("hidden");
   }
@@ -1290,3 +1397,4 @@ async function boot() {
 }
 
 document.addEventListener("DOMContentLoaded", boot); 
+
